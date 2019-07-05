@@ -10,10 +10,12 @@ import UIKit
 import RealmSwift
 
 class HomeViewController: UIViewController {
-    //let realMInstance = try! Realm()
+    let realMInstance = try! Realm()
     let UserResult = try! Realm().objects(UserObject.self)
-
     @IBOutlet weak var tableView: UITableView!
+    override func viewWillAppear(_ animated: Bool) {
+        tableView.reloadData()
+    }
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
@@ -34,24 +36,33 @@ class HomeViewController: UIViewController {
 extension HomeViewController: UITableViewDelegate, UITableViewDataSource{
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as? HomeTableViewCell{
-            var user: UserObject
-            user = self.UserResult[indexPath.row] as UserObject
-            cell.lblName.text = user.name
-            cell.lblAddress.text = user.address
+            //var user: UserObject
+            let user = UserResult[indexPath.row] as UserObject
+            //user = self.UserResult[indexPath.row] as UserObject
+            DispatchQueue.main.async {
+                cell.lblName.text = user.name
+                cell.lblAddress.text = user.address
+            }
             return cell
-        }
-        else {
-            return UITableViewCell()
 
+        } else {
+            return UITableViewCell()
         }
     }
-    
     func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return UserResult.count
     }
-    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete{
+            let user = UserResult[indexPath.row]
+            try! realMInstance.write {
+                    realMInstance.delete(user)
+            }
+            tableView.deleteRows(at: [indexPath], with: UITableView.RowAnimation.automatic)
+        }
+    }
 }
 
